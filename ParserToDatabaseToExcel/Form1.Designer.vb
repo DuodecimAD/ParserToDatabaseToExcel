@@ -28,8 +28,12 @@ Partial Class Form1
         Me.TextBox2 = New System.Windows.Forms.TextBox()
         Me.Label1 = New System.Windows.Forms.Label()
         Me.Label2 = New System.Windows.Forms.Label()
-        Me.info = New System.Windows.Forms.Label()
         Me.SendDB = New System.Windows.Forms.Button()
+        Me.info = New System.Windows.Forms.TextBox()
+        Me.GetDB = New System.Windows.Forms.Button()
+        Me.TextBox3 = New System.Windows.Forms.TextBox()
+        Me.Label3 = New System.Windows.Forms.Label()
+        Me.toExcel = New System.Windows.Forms.Button()
         Me.MenuStrip1.SuspendLayout()
         Me.SuspendLayout()
         '
@@ -39,7 +43,7 @@ Partial Class Form1
         Me.MenuStrip1.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.OpenFileToParseToolStripMenuItem})
         Me.MenuStrip1.Location = New System.Drawing.Point(0, 0)
         Me.MenuStrip1.Name = "MenuStrip1"
-        Me.MenuStrip1.Size = New System.Drawing.Size(800, 28)
+        Me.MenuStrip1.Size = New System.Drawing.Size(1365, 28)
         Me.MenuStrip1.TabIndex = 0
         Me.MenuStrip1.Text = "MenuStrip1"
         '
@@ -70,44 +74,82 @@ Partial Class Form1
         Me.Label1.AutoSize = True
         Me.Label1.Location = New System.Drawing.Point(24, 50)
         Me.Label1.Name = "Label1"
-        Me.Label1.Size = New System.Drawing.Size(36, 16)
+        Me.Label1.Size = New System.Drawing.Size(61, 16)
         Me.Label1.TabIndex = 3
-        Me.Label1.Text = "Json"
+        Me.Label1.Text = "File Json"
         '
         'Label2
         '
         Me.Label2.AutoSize = True
-        Me.Label2.Location = New System.Drawing.Point(411, 47)
+        Me.Label2.Location = New System.Drawing.Point(408, 47)
         Me.Label2.Name = "Label2"
-        Me.Label2.Size = New System.Drawing.Size(74, 16)
+        Me.Label2.Size = New System.Drawing.Size(60, 16)
         Me.Label2.TabIndex = 4
-        Me.Label2.Text = "Clean Json"
-        '
-        'info
-        '
-        Me.info.AutoSize = True
-        Me.info.Location = New System.Drawing.Point(139, 363)
-        Me.info.Name = "info"
-        Me.info.Size = New System.Drawing.Size(37, 16)
-        Me.info.TabIndex = 5
-        Me.info.Text = "info : "
+        Me.Label2.Text = "From DB"
         '
         'SendDB
         '
-        Me.SendDB.Location = New System.Drawing.Point(49, 360)
+        Me.SendDB.Location = New System.Drawing.Point(27, 342)
         Me.SendDB.Name = "SendDB"
         Me.SendDB.Size = New System.Drawing.Size(75, 23)
         Me.SendDB.TabIndex = 6
         Me.SendDB.Text = "SendDB"
         Me.SendDB.UseVisualStyleBackColor = True
         '
+        'info
+        '
+        Me.info.Location = New System.Drawing.Point(27, 395)
+        Me.info.Name = "info"
+        Me.info.Size = New System.Drawing.Size(749, 22)
+        Me.info.TabIndex = 7
+        Me.info.Text = "info : "
+        '
+        'GetDB
+        '
+        Me.GetDB.Location = New System.Drawing.Point(411, 341)
+        Me.GetDB.Name = "GetDB"
+        Me.GetDB.Size = New System.Drawing.Size(75, 23)
+        Me.GetDB.TabIndex = 8
+        Me.GetDB.Text = "GetDB"
+        Me.GetDB.UseVisualStyleBackColor = True
+        '
+        'TextBox3
+        '
+        Me.TextBox3.Location = New System.Drawing.Point(796, 69)
+        Me.TextBox3.Multiline = True
+        Me.TextBox3.Name = "TextBox3"
+        Me.TextBox3.Size = New System.Drawing.Size(557, 257)
+        Me.TextBox3.TabIndex = 9
+        '
+        'Label3
+        '
+        Me.Label3.AutoSize = True
+        Me.Label3.Location = New System.Drawing.Point(793, 47)
+        Me.Label3.Name = "Label3"
+        Me.Label3.Size = New System.Drawing.Size(54, 16)
+        Me.Label3.TabIndex = 10
+        Me.Label3.Text = "to Excel"
+        '
+        'toExcel
+        '
+        Me.toExcel.Location = New System.Drawing.Point(796, 342)
+        Me.toExcel.Name = "toExcel"
+        Me.toExcel.Size = New System.Drawing.Size(75, 23)
+        Me.toExcel.TabIndex = 11
+        Me.toExcel.Text = "toExcel"
+        Me.toExcel.UseVisualStyleBackColor = True
+        '
         'Form1
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(800, 450)
-        Me.Controls.Add(Me.SendDB)
+        Me.ClientSize = New System.Drawing.Size(1365, 450)
+        Me.Controls.Add(Me.toExcel)
+        Me.Controls.Add(Me.Label3)
+        Me.Controls.Add(Me.TextBox3)
+        Me.Controls.Add(Me.GetDB)
         Me.Controls.Add(Me.info)
+        Me.Controls.Add(Me.SendDB)
         Me.Controls.Add(Me.Label2)
         Me.Controls.Add(Me.Label1)
         Me.Controls.Add(Me.TextBox2)
@@ -128,6 +170,10 @@ Partial Class Form1
     Friend WithEvents TextBox2 As TextBox
     Friend WithEvents Label1 As Label
     Friend WithEvents Label2 As Label
-    Friend WithEvents info As Label
     Friend WithEvents SendDB As Button
+    Friend WithEvents info As TextBox
+    Friend WithEvents GetDB As Button
+    Friend WithEvents TextBox3 As TextBox
+    Friend WithEvents Label3 As Label
+    Friend WithEvents toExcel As Button
 End Class

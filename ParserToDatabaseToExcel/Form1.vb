@@ -1,58 +1,125 @@
-﻿Imports System.Diagnostics.Eventing
+﻿Imports System.Data.SqlClient
+Imports System.Diagnostics.Eventing
 Imports System.IO
 Imports System.Reflection.Emit
 Imports System.Runtime.InteropServices
 Imports System.Windows.Forms.VisualStyles.VisualStyleElement
 Imports Microsoft.Office.Interop.Excel
+Imports Newtonsoft
 Imports Newtonsoft.Json
 Imports Newtonsoft.Json.Linq
 Imports Oracle.DataAccess.Client
 Imports Oracle.DataAccess.Types
 
 
+
 Public Class Form1
+
+    Public Class Animal
+        Public Property Name As String
+        Public Property Size_cm As Integer
+        Public Property Country As String
+    End Class
+
+    Private Sub OpenFileToParseToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles OpenFileToParseToolStripMenuItem.Click
+        ' Create an instance of OpenFileDialog
+        Dim openFileDialog As New OpenFileDialog()
+
+        ' Set properties of the OpenFileDialog
+        openFileDialog.Title = "Select a JSON File"
+        openFileDialog.Filter = "JSON Files|*.json|All Files|*.*" ' Specify file filters for JSON
+        'openFileDialog.InitialDirectory = Environment.CurrentDirectory
+        openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
+
+        ' Set the initial directory
+
+        ' Show the OpenFileDialog and check if the user clicked OK
+        If openFileDialog.ShowDialog() = DialogResult.OK Then
+            ' Get the selected file name
+            Dim selectedFileName As String = openFileDialog.FileName
+            Dim fileContent As String = File.ReadAllText(selectedFileName)
+
+            TextBox1.Text = fileContent
+
+            'ProcessFileContent(fileContent)
+        End If
+    End Sub
+
 
     Dim userId = "TESTDOCKER"
     Dim password = "TESTDOCKER"
     Dim dataSource = "localhost:49161/xe"
 
-#If False Then
-
     Dim conn As New OracleConnection
 
-    Private Sub Button1_Click(sender As Object, e As EventArgs) Handles Button1.Click
+    Private Sub SendDB_Click(sender As Object, e As EventArgs) Handles SendDB.Click
+        ' Assuming you have a function to create the JSON string from your data
+        Dim jsonString As String = TextBox1.Text
+
+        Dim animalsList As List(Of Animal) = JsonConvert.DeserializeObject(Of List(Of Animal))(jsonString)
+
+        Try
+            ' Initialize the connection
+            conn.ConnectionString = "User Id=" + userId + ";Password=" + password + ";Data Source=" + dataSource + ";"
+            conn.Open()
+            info.Text = "info : Connected"
+
+            For Each animal In animalsList
+                Dim insertCommand As New OracleCommand("INSERT INTO Animals (Name, Size_cm, Country) VALUES (:Name, :Size_cm, :Country)", conn)
+
+                ' Add parameters
+                insertCommand.Parameters.Add("Name", OracleDbType.Varchar2).Value = animal.Name
+                insertCommand.Parameters.Add("Size_cm", OracleDbType.Int32).Value = animal.Size_cm
+                insertCommand.Parameters.Add("Country", OracleDbType.Varchar2).Value = animal.Country
+
+                ' Execute the command
+                insertCommand.ExecuteNonQuery()
+            Next
+            info.Text = "info : Connected : json has been written in the database"
+        Catch ex As Exception
+            info.Text = "info : Error: " & ex.Message
+            Return
+        Finally
+            ' Close the connection in the finally block to ensure it's closed even if an exception occurs
+            If conn.State = ConnectionState.Open Then
+                conn.Close()
+            End If
+        End Try
+
+    End Sub
+
+    Private Sub GetDB_Click(sender As Object, e As EventArgs) Handles GetDB.Click
 
         Try
             conn.ConnectionString = "User Id=" + userId + ";Password=" + password + ";Data Source=" + dataSource + ";"
             conn.Open()
-            TextBox1.Text = "Connected"
+            info.Text = "Connected"
         Catch ex As Exception
-            TextBox1.Text = "Error: " & ex.Message
+            info.Text = "Error: " & ex.Message
         End Try
 
-        Dim cmd As New OracleCommand("Select CITY_NAME from CITY", conn)
+        Dim cmd As New OracleCommand("SELECT * from Animals", conn)
         Dim answer As OracleDataReader = cmd.ExecuteReader()
 
         While answer.Read()
 
-            Dim cityName As String = answer.GetString(0)
-            TextBox1.AppendText(cityName)
+            Dim names As String = answer.GetString(0)
+            Dim size As Integer = answer.GetInt32(1)
+            Dim country As String = answer.GetString(2)
+            TextBox2.AppendText($"{names}, {size}, {country}{vbCrLf}")
 
         End While
-        conn.dispose()
-    End Sub
+        conn.Dispose()
 
+    End Sub
 
     Dim excelApp As New Application()
 
-    Private Sub Button2_Click(sender As Object, e As EventArgs) Handles Button2.Click
+    Private Sub toExcel_Click(sender As Object, e As EventArgs) Handles toExcel.Click
 
         ' Specify the path to the Excel file (XLSX) you want to check
-        Dim filePath As String = "D:\VisualBasic\databaseConnectVB\xlsx\test.xlsx"
+        Dim filePath As String = "D:\VisualBasic\ParserToDatabaseToExcel\xlsx\test.xlsx"
         ' Create a new Excel Application and open a workbook
-
-
-        Label1.Text = ""
 
 
         ' Try to open the workbook. If it's already open, it will throw an exception.
@@ -65,11 +132,51 @@ Public Class Form1
 
             ' Find the next available row in column 1 (A)
             Dim lastRow As Integer = worksheet.Cells(worksheet.Rows.Count, 1).End(XlDirection.xlUp).Row
+            lastRow = lastRow + 1
 
             ' Write data to the next available row in column 1 (A)
-            worksheet.Cells(lastRow + 1, 1).Value = TextBox2.Text
+            'worksheet.Cells(lastRow + 1, 1).Value = TextBox2.Text
 
-            Label1.Text = "Added " + TextBox2.Text + " to the excel file in the cell A" + lastRow.ToString
+            ' Split the input string into lines
+            Dim lines() As String = TextBox2.Text.Split(vbCrLf)
+
+            TextBox3.Text = "Added : " + vbCrLf
+
+            Dim columnName = ""
+            worksheet.Cells(1, 1).Value = "Name"
+            worksheet.Cells(1, 2).Value = "Size"
+            worksheet.Cells(1, 3).Value = "Country"
+
+            ' Write each line to a separate row in the Excel sheet
+            For i As Integer = 0 To lines.Length - 2
+                ' Split each line into individual elements based on commas
+                Dim elements() As String = lines(i).Split(",")
+
+                ' Write each element to a separate cell in the same row
+                For j As Integer = 0 To elements.Length - 1
+
+
+
+                    ' Use j index for elements array, not i
+                    worksheet.Cells(lastRow + i, j + 1).Value = elements(j).Trim()
+
+                    Select Case j
+                        Case 0
+                            columnName = "A"
+                        Case 1
+                            columnName = "B"
+                        Case 2
+                            columnName = "C"
+                        Case Else
+                            columnName = "add more letters in the switch case"
+                    End Select
+
+                    TextBox3.AppendText(elements(j).Trim() + " in the cell " + columnName + (lastRow + i).ToString + ", ")
+                Next
+                TextBox3.AppendText(vbCrLf)
+            Next
+
+            'TextBox3.Text = "Added " + TextBox2.Text + " to the excel file in the cell A" + lastRow.ToString
 
             ' Print a message to the console
             Console.WriteLine(lastRow)
@@ -93,77 +200,8 @@ Public Class Form1
         ' Write data to a specific cell, e.g., cell A1
         ' worksheet.Cells(1, 1).Value = TextBox2.Text
 
-        ''''''''''''''''''''''''''''''''''''''''''''''
-        ''''''''''''''''''''''''''''''''''''''''''''''''''
-
     End Sub
 
-#End If
-
-    Private Sub OpenFileToParseToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles OpenFileToParseToolStripMenuItem.Click
-        ' Create an instance of OpenFileDialog
-        Dim openFileDialog As New OpenFileDialog()
-
-        ' Set properties of the OpenFileDialog
-        openFileDialog.Title = "Select a JSON File"
-        openFileDialog.Filter = "JSON Files|*.json|All Files|*.*" ' Specify file filters for JSON
-        openFileDialog.InitialDirectory = Environment.CurrentDirectory
-        ' Set the initial directory
-
-        ' Show the OpenFileDialog and check if the user clicked OK
-        If openFileDialog.ShowDialog() = DialogResult.OK Then
-            ' Get the selected file name
-            Dim selectedFileName As String = openFileDialog.FileName
-            Dim fileContent As String = File.ReadAllText(selectedFileName)
-
-            ProcessFileContent(fileContent)
-        End If
-    End Sub
-
-    Private Sub ProcessFileContent(jsonString As String)
-        TextBox1.Text = jsonString
-
-        ' Deserialize the JSON string
-        Dim jsonArray As JArray = JsonConvert.DeserializeObject(jsonString)
-
-        ' Convert the JArray to a string and remove square brackets and curly braces
-        Dim cleanJsonString As String = jsonArray.ToString().Replace("[", "").Replace("]", "").Replace("{", "").Replace("}", "")
-        TextBox2.Text = cleanJsonString
-    End Sub
-
-
-    Dim conn As New OracleConnection
-
-    Private Sub SendDB_Click(sender As Object, e As EventArgs) Handles SendDB.Click
-        Try
-            conn.ConnectionString = "User Id=" + userId + ";Password=" + password + ";Data Source=" + dataSource + ";"
-            conn.Open()
-            info.Text = "info : Connected"
-        Catch ex As Exception
-            info.Text = "info : Error: " & ex.Message
-            Return
-        End Try
-
-        ' Assuming you have a function to create the JSON string from your data
-        Dim jsonString As String = TextBox1.Text
-
-        ' Call the stored procedure with the JSON parameter
-        Try
-            Using cmd As New OracleCommand("InsertJsonData", conn)
-                cmd.CommandType = CommandType.StoredProcedure
-                cmd.Parameters.Add("p_json_string", OracleDbType.Clob).Value = jsonString
-                cmd.ExecuteNonQuery()
-            End Using
-
-            info.Text = "info : JSON data sent successfully."
-        Catch ex As Exception
-            info.Text = "info : Error: " & ex.Message
-        Finally
-            conn.Close()
-        End Try
-    End Sub
-
-    Private Sub TextBox1_TextChanged(sender As Object, e As EventArgs) Handles TextBox1.TextChanged
-
-    End Sub
 End Class
+
+
