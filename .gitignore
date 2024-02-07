@@ -2,3 +2,5 @@
 /.vs/
 /release/
 /ParserToDatabaseToExcel/bin/
+/ParserToDatabaseToExcel/obj/Debug/
+/ParserToDatabaseToExcel/obj/x64/Release
