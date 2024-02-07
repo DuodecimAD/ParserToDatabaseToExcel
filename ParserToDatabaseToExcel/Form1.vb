@@ -1,37 +1,33 @@
-﻿Imports System.Data.SqlClient
-Imports System.Diagnostics.Eventing
-Imports System.IO
-Imports System.Reflection.Emit
+﻿Imports System.IO
 Imports System.Runtime.InteropServices
-Imports System.Windows.Forms.VisualStyles.VisualStyleElement
 Imports Microsoft.Office.Interop.Excel
-Imports Newtonsoft
 Imports Newtonsoft.Json
-Imports Newtonsoft.Json.Linq
 Imports Oracle.DataAccess.Client
-Imports Oracle.DataAccess.Types
-
-
 
 Public Class Form1
 
+    ' Class Animal in which JSON datas will be imported
     Public Class Animal
         Public Property Name As String
         Public Property Size_cm As Integer
         Public Property Country As String
     End Class
 
+
+    ' Button Parse logic to open JSON file
     Private Sub OpenFileToParseToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles OpenFileToParseToolStripMenuItem.Click
+
         ' Create an instance of OpenFileDialog
         Dim openFileDialog As New OpenFileDialog()
 
         ' Set properties of the OpenFileDialog
         openFileDialog.Title = "Select a JSON File"
-        openFileDialog.Filter = "JSON Files|*.json|All Files|*.*" ' Specify file filters for JSON
-        'openFileDialog.InitialDirectory = Environment.CurrentDirectory
-        openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
 
-        ' Set the initial directory
+        ' Specify file filters for JSON
+        openFileDialog.Filter = "JSON Files|*.json|All Files|*.*"
+
+        ' openFileDialog.InitialDirectory = Environment.CurrentDirectory = Desktop
+        openFileDialog.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.Desktop)
 
         ' Show the OpenFileDialog and check if the user clicked OK
         If openFileDialog.ShowDialog() = DialogResult.OK Then
@@ -39,31 +35,38 @@ Public Class Form1
             Dim selectedFileName As String = openFileDialog.FileName
             Dim fileContent As String = File.ReadAllText(selectedFileName)
 
+            ' Write the JSON's content into TextBox1
             TextBox1.Text = fileContent
 
-            'ProcessFileContent(fileContent)
         End If
     End Sub
 
 
+    ' Hardcoded parameters to connect to the Database
     Dim userId = "TESTDOCKER"
     Dim password = "TESTDOCKER"
     Dim dataSource = "localhost:49161/xe"
 
+    ' Create the Database connection
     Dim conn As New OracleConnection
 
+    ' Button sent to Database logic
     Private Sub SendDB_Click(sender As Object, e As EventArgs) Handles SendDB.Click
-        ' Assuming you have a function to create the JSON string from your data
+
+        ' Take data from TextBox1
         Dim jsonString As String = TextBox1.Text
 
+        ' transform the data to Animal's objects
         Dim animalsList As List(Of Animal) = JsonConvert.DeserializeObject(Of List(Of Animal))(jsonString)
 
+        ' Send objects to Database
         Try
             ' Initialize the connection
             conn.ConnectionString = "User Id=" + userId + ";Password=" + password + ";Data Source=" + dataSource + ";"
             conn.Open()
             info.Text = "info : Connected"
 
+            ' send each objects
             For Each animal In animalsList
                 Dim insertCommand As New OracleCommand("INSERT INTO Animals (Name, Size_cm, Country) VALUES (:Name, :Size_cm, :Country)", conn)
 
@@ -80,7 +83,6 @@ Public Class Form1
             info.Text = "info : Error: " & ex.Message
             Return
         Finally
-            ' Close the connection in the finally block to ensure it's closed even if an exception occurs
             If conn.State = ConnectionState.Open Then
                 conn.Close()
             End If
@@ -88,6 +90,7 @@ Public Class Form1
 
     End Sub
 
+    ' Button to get data from Database logic
     Private Sub GetDB_Click(sender As Object, e As EventArgs) Handles GetDB.Click
 
         Try
@@ -113,19 +116,28 @@ Public Class Form1
 
     End Sub
 
+    ' Initialization of the Excel interface
     Dim excelApp As New Application()
 
+    ' Button send data to excel logic
     Private Sub toExcel_Click(sender As Object, e As EventArgs) Handles toExcel.Click
 
-        ' Specify the path to the Excel file (XLSX) you want to check
-        Dim filePath As String = "D:\VisualBasic\ParserToDatabaseToExcel\xlsx\test.xlsx"
-        ' Create a new Excel Application and open a workbook
+        ' path to the excel
+        Dim filePath As String = Environment.GetFolderPath(Environment.SpecialFolder.Desktop) + "\Animals.xlsx"
 
+        ' Declare the workbook variable
+        Dim workbook As Workbook = Nothing
 
-        ' Try to open the workbook. If it's already open, it will throw an exception.
-        Dim workbook As Workbook = excelApp.Workbooks.Open(filePath)
         Try
-            'workbook = excelApp.Workbooks.Open(filePath)
+            ' Open the workbook if it exists
+            If File.Exists(filePath) Then
+                workbook = excelApp.Workbooks.Open(filePath)
+            Else
+                ' Create a new workbook if it doesn't exist
+                workbook = excelApp.Workbooks.Add()
+                workbook.SaveAs(filePath)
+
+            End If
 
             ' Access a specific worksheet, e.g., "Sheet1"
             Dim worksheet As Worksheet = workbook.Sheets("Sheet1")
@@ -155,8 +167,6 @@ Public Class Form1
                 ' Write each element to a separate cell in the same row
                 For j As Integer = 0 To elements.Length - 1
 
-
-
                     ' Use j index for elements array, not i
                     worksheet.Cells(lastRow + i, j + 1).Value = elements(j).Trim()
 
@@ -176,29 +186,31 @@ Public Class Form1
                 TextBox3.AppendText(vbCrLf)
             Next
 
-            'TextBox3.Text = "Added " + TextBox2.Text + " to the excel file in the cell A" + lastRow.ToString
+            ' Write data to a specific cell, e.g., cell A1
+            ' worksheet.Cells(1, 1).Value = TextBox2.Text
+
+            ' TextBox3.Text = "Added " + TextBox2.Text + " to the excel file in the cell A" + lastRow.ToString
 
             ' Print a message to the console
-            Console.WriteLine(lastRow)
+            ' Console.WriteLine(lastRow)
+
+        Catch ex As Exception
+            ' The workbook is already open or couldn't be opened.
+            Console.WriteLine("Excel workbook is already open or cannot be opened.")
+            Return
+        Finally
 
             ' Save the workbook with the changes
             workbook.Save()
 
             ' Close and release Excel objects
             workbook.Close()
+
             'excelApp.Quit()
             Marshal.ReleaseComObject(workbook)
-            'Marshal.ReleaseComObject(excelApp)
-        Catch ex As Exception
-            ' The workbook is already open or couldn't be opened.
-            Console.WriteLine("Excel workbook is already open or cannot be opened.")
-            Return
+
         End Try
 
-
-
-        ' Write data to a specific cell, e.g., cell A1
-        ' worksheet.Cells(1, 1).Value = TextBox2.Text
 
     End Sub
 

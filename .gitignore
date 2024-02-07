@@ -1,3 +1,4 @@
 *.sln
 /.vs/
 /release/
+/ParserToDatabaseToExcel/bin/
